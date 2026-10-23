@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tuition Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            primary: 'var(--primary)',
+            primaryHover: 'var(--primary-hover)',
+            primaryLight: 'var(--primary-light)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #e0e7ff;
+    }
+    body { transition: background-color 0.3s, color 0.3s; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans pb-14">
+
+  <!-- LOGIN SECTION (Initially Visible if not logged in) -->
+  <div id="loginScreen" class="flex items-center justify-center min-h-screen px-4 bg-slate-100 dark:bg-slate-950">
+    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
+      <div class="text-center mb-6">
+        <span class="text-4xl bg-primary/10 p-3 rounded-2xl inline-block mb-2">🔐</span>
+        <h2 class="text-2xl font-bold">Tuition Portal Login</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your credentials to access management dashboard</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Email Address</label>
+          <input id="loginEmail" type="email" placeholder="e.g., owner@tuition.com" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+        </div>
+        <button onclick="handleLogin()" id="btnLogin" class="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-3 rounded-xl shadow-md transition duration-200">
+          Login to Dashboard
+        </button>
+        <p id="loginError" class="text-rose-500 text-xs text-center font-medium mt-2"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD (Initially Hidden until logged in) -->
+  <div id="dashboardApp" class="hidden">
+    <!-- Top Navbar -->
+    <header class="bg-primary text-white shadow-lg sticky top-0 z-50 transition-colors duration-300">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">🎓</span>
+          <div>
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight">Tuition Management System</h1>
+            <p class="text-xs text-white/80">Smart Student, Fee & Attendance Portal</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm">
+          <div class="flex items-center gap-2">
+            <button onclick="setTheme('#4f46e5', '#4338ca', '#e0e7ff')" title="Indigo" class="w-4 h-4 rounded-full bg-indigo-500 border-2 border-white hover:scale-125 transition"></button>
+            <button onclick="setTheme('#059669', '#047857', '#d1fae5')" title="Emerald" class="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white hover:scale-125 transition"></button>
+            <button onclick="setTheme('#2563eb', '#1d4ed8', '#dbeafe')" title="Blue" class="w-4 h-4 rounded-full bg-blue-500 border-2 border-white hover:scale-125 transition"></button>
+            <button onclick="setTheme('#e11d48', '#be123c', '#ffe4e6')" title="Rose" class="w-4 h-4 rounded-full bg-rose-500 border-2 border-white hover:scale-125 transition"></button>
+          </div>
+          <div class="h-4 w-[1px] bg-white/30"></div>
+          <button onclick="toggleDarkMode()" id="darkBtn" class="text-xs font-medium hover:scale-110 transition">🌙</button>
+          <div class="h-4 w-[1px] bg-white/30"></div>
+          <button onclick="handleLogout()" class="text-xs font-bold text-rose-200 hover:text-white transition">Logout 🚪</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8 space-y-8">
+      <!-- Top 4 Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-primaryLight text-primary flex items-center justify-center text-2xl font-bold">👨‍🎓</div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Total Students</p>
+            <p class="text-2xl font-bold" id="totalStudentsCount">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold">💰</div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Total Monthly Fee</p>
+            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">Rs. <span id="sumTotalFee">0</span></p>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">✅</div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Paid Fee</p>
+            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">Rs. <span id="sumPaidFee">0</span></p>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-2xl font-bold">⏳</div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Remaining Fee</p>
+            <p class="text-2xl font-bold text-rose-600 dark:text-rose-400">Rs. <span id="sumRemFee">0</span></p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Forms Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- 1. Add Student Card -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 border-t-4 border-t-primary">
+          <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="bg-primaryLight text-primary p-1.5 rounded-lg text-sm">➕</span> 1. Add New Student
+          </h2>
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Student Name *</label>
+                <input id="stuName" type="text" placeholder="e.g., Ali Khan" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Father Name</label>
+                <input id="stuFather" type="text" placeholder="e.g., Ahmed Khan" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Class / Grade</label>
+                <input id="stuClass" type="text" placeholder="e.g., 9th Grade" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Total Monthly Fee (Rs.) *</label>
+                <input id="stuFee" type="number" placeholder="e.g., 3000" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Phone Number</label>
+              <input id="stuPhone" type="text" placeholder="e.g., 0300-1234567" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+            </div>
+            <button onclick="addStudent()" id="btnStudent" class="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition duration-200 mt-2">
+              Save Student
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Daily Entry Card -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 border-t-4 border-t-primary">
+          <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="bg-primaryLight text-primary p-1.5 rounded-lg text-sm">📝</span> 2. Daily Attendance, Topic & Fee
+          </h2>
+          <div class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Select Student *</label>
+              <select id="logStudent" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+                <option value="">-- Select a Student --</option>
+              </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Date</label>
+                <input id="logDate" type="date" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Attendance</label>
+                <select id="logAttendance" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl outline-none">
+                  <option value="Present">✅ Present</option>
+                  <option value="Absent">❌ Absent</option>
+                  <option value="Leave">⚠️ Leave</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Topic Covered Today</label>
+              <input id="logTopic" type="text" placeholder="e.g., Maths Ex 2.4, Physics Ch 3" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Fee Received (Rs.) <span class="text-[11px] font-normal lowercase opacity-75">(optional)</span></label>
+              <input id="logFee" type="number" placeholder="e.g., 1500 (Leave blank if none)" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+            </div>
+
+            <button onclick="addDailyLog()" id="btnLog" class="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition duration-200">
+              Save Daily Record
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Students & Monthly Fee Status Table -->
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <span class="bg-primaryLight text-primary p-1.5 rounded-lg text-sm">👨‍🎓</span> Students & Monthly Fee Record
+        </h2>
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 uppercase text-xs tracking-wider">
+                <th class="p-3.5">Student Name</th>
+                <th class="p-3.5">Father Name</th>
+                <th class="p-3.5">Class / Grade</th>
+                <th class="p-3.5">Phone</th>
+                <th class="p-3.5">Total Monthly Fee</th>
+                <th class="p-3.5">Paid Fee</th>
+                <th class="p-3.5">Remaining Fee</th>
+                <th class="p-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="studentsList" class="divide-y divide-slate-200 dark:divide-slate-700">
+              <tr><td colspan="8" class="p-6 text-center text-slate-400">Loading students...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Individual Student Daily Attendance & Topics Table -->
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
+          <h2 class="text-lg font-bold flex items-center gap-2">
+            <span class="bg-primaryLight text-primary p-1.5 rounded-lg text-sm">📊</span> Student Attendance, Topics & Payment History
+          </h2>
+          
+          <div class="w-full sm:w-72">
+            <select id="filterStudent" onchange="renderSelectedStudentLogs()" class="w-full border-2 border-primary/40 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl font-medium focus:ring-2 focus:ring-primary outline-none transition">
+              <option value="">-- Select Student to View History --</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="studentStatsBar" class="hidden grid grid-cols-3 gap-3 mb-4 bg-slate-50 dark:bg-slate-700/30 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700 text-center">
+          <div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 block uppercase">Present Days</span>
+            <span id="stuPresentCount" class="text-lg font-bold text-emerald-600 dark:text-emerald-400">0</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 block uppercase">Absent / Leave</span>
+            <span id="stuAbsentCount" class="text-lg font-bold text-rose-600 dark:text-rose-400">0</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 block uppercase">Total Fee Paid</span>
+            <span class="text-lg font-bold text-blue-600 dark:text-blue-400">Rs. <span id="stuSelectedPaid">0</span></span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 uppercase text-xs tracking-wider">
+                <th class="p-3.5">Date</th>
+                <th class="p-3.5">Student Name</th>
+                <th class="p-3.5">Attendance</th>
+                <th class="p-3.5">Topic Covered</th>
+                <th class="p-3.5">Fee Paid</th>
+                <th class="p-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="logsList" class="divide-y divide-slate-200 dark:divide-slate-700">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">Please select a student from the dropdown above to view their daily records.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Theme & Dark Mode
+    function setTheme(primary, hover, light) {
+      document.documentElement.style.setProperty('--primary', primary);
+      document.documentElement.style.setProperty('--primary-hover', hover);
+      document.documentElement.style.setProperty('--primary-light', light);
+      localStorage.setItem('tuition_theme', JSON.stringify({ primary, hover, light }));
+    }
+
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+      document.getElementById('darkBtn').innerText = isDark ? '☀️' : '🌙';
+      localStorage.setItem('tuition_dark', isDark);
+    }
+
+    const savedTheme = JSON.parse(localStorage.getItem('tuition_theme'));
+    if (savedTheme) setTheme(savedTheme.primary, savedTheme.hover, savedTheme.light);
+    if (localStorage.getItem('tuition_dark') === 'true') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('darkBtn').innerText = '☀️';
+    }
+
+    // Supabase Connection
+    const SUPABASE_URL = 'https://vbjqmgmwjoozrvhckvfy.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_nktl4QMBwU8Gamgh2fM8rQ_cMu3j3a3';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    document.getElementById('logDate').valueAsDate = new Date();
+    let allLogsData = [];
+
+    // Check Auth on Load
+    async function checkUserSession() {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboardApp').classList.remove('hidden');
+        loadAllData();
+      } else {
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('dashboardApp').classList.add('hidden');
+      }
+    }
+
+    // Handle Login
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const errEl = document.getElementById('loginError');
+      errEl.innerText = '';
+
+      if (!email || !password) {
+        errEl.innerText = 'Please enter both email and password!';
+        return;
+      }
+
+      const btn = document.getElementById('btnLogin');
+      btn.innerText = 'Logging in...';
+
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      btn.innerText = 'Login to Dashboard';
+
+      if (error) {
+        errEl.innerText = error.message;
+        return;
+      }
+
+      checkUserSession();
+    }
+
+    // Handle Logout
+    async function handleLogout() {
+      await db.auth.signOut();
+      checkUserSession();
+    }
+
+    // Load Data
+    async function loadAllData() {
+      const currentFilter = document.getElementById('filterStudent').value;
+      const { data: students, error: err1 } = await db.from('students').select('*').order('created_at', { ascending: false });
+      const { data: logs, error: err2 } = await db.from('daily_logs').select('*, students(name, class_grade)').order('log_date', { ascending: false });
+
+      if (err1 || err2) {
+        console.error(err1 || err2);
+        return;
+      }
+
+      allLogsData = logs;
+      document.getElementById('totalStudentsCount').innerText = students.length;
+
+      const paidByStudent = {};
+      logs.forEach(log => {
+        const sId = log.student_id;
+        paidByStudent[sId] = (paidByStudent[sId] || 0) + Number(log.fee_paid || 0);
+      });
+
+      const select = document.getElementById('logStudent');
+      const filterSelect = document.getElementById('filterStudent');
+      const stuBody = document.getElementById('studentsList');
+      
+      select.innerHTML = '<option value="">-- Select a Student --</option>';
+      filterSelect.innerHTML = '<option value="">-- Select Student to View History --</option>';
+      stuBody.innerHTML = '';
+
+      let sumTotal = 0, sumPaid = 0, sumRem = 0;
+
+      if (students.length === 0) {
+        stuBody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400">No students added yet. Use the form above to add a student!</td></tr>';
+      }
+
+      students.forEach(s => {
+        const totalFee = Number(s.monthly_fee || 0);
+        const paidFee = paidByStudent[s.id] || 0;
+        const remFee = totalFee - paidFee;
+
+        sumTotal += totalFee;
+        sumPaid += paidFee;
+        sumRem += remFee;
+
+        const optionText = `${s.name} ${s.father_name ? 'S/O ' + s.father_name : ''} (${s.class_grade || 'N/A'})`;
+        select.innerHTML += `<option value="${s.id}">${optionText}</option>`;
+        filterSelect.innerHTML += `<option value="${s.id}">${optionText}</option>`;
+
+        const remBadge = remFee <= 0 
+          ? `<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 px-3 py-1 rounded-full text-xs font-bold">Cleared (Rs. 0)</span>`
+          : `<span class="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 px-3 py-1 rounded-full text-xs font-bold">Rs. ${remFee} Remaining</span>`;
+
+        stuBody.innerHTML += `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+            <td class="p-3.5 font-semibold">
+              <button onclick="viewStudentHistory(${s.id})" class="text-left hover:text-primary underline decoration-dotted underline-offset-4">${s.name}</button>
+            </td>
+            <td class="p-3.5 text-slate-600 dark:text-slate-300">${s.father_name || '-'}</td>
+            <td class="p-3.5 text-slate-500 dark:text-slate-400">${s.class_grade || '-'}</td>
+            <td class="p-3.5 text-slate-500 dark:text-slate-400">${s.phone || '-'}</td>
+            <td class="p-3.5 font-bold text-blue-600 dark:text-blue-400">Rs. ${totalFee}</td>
+            <td class="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">Rs. ${paidFee}</td>
+            <td class="p-3.5">${remBadge}</td>
+            <td class="p-3.5 text-right space-x-1">
+              <button onclick="viewStudentHistory(${s.id})" class="bg-primaryLight text-primary px-2.5 py-1 rounded-lg text-xs font-semibold hover:opacity-80 transition">View Logs</button>
+              <button onclick="deleteStudent(${s.id})" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-2.5 py-1 rounded-lg text-xs font-semibold transition">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('sumTotalFee').innerText = sumTotal;
+      document.getElementById('sumPaidFee').innerText = sumPaid;
+      document.getElementById('sumRemFee').innerText = sumRem;
+
+      if (currentFilter) filterSelect.value = currentFilter;
+      renderSelectedStudentLogs();
+    }
+
+    function viewStudentHistory(studentId) {
+      const filterSelect = document.getElementById('filterStudent');
+      filterSelect.value = studentId;
+      renderSelectedStudentLogs();
+      filterSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function renderSelectedStudentLogs() {
+      const selectedId = document.getElementById('filterStudent').value;
+      const logsBody = document.getElementById('logsList');
+      const statsBar = document.getElementById('studentStatsBar');
+      logsBody.innerHTML = '';
+
+      if (!selectedId) {
+        statsBar.classList.add('hidden');
+        logsBody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">Please select a student from the dropdown above to view their daily records.</td></tr>';
+        return;
+      }
+
+      const filteredLogs = allLogsData.filter(log => String(log.student_id) === String(selectedId));
+      statsBar.classList.remove('hidden');
+
+      let presentCount = 0, absentCount = 0, totalPaid = 0;
+      filteredLogs.forEach(log => {
+        if (log.attendance === 'Present') presentCount++;
+        else absentCount++;
+        totalPaid += Number(log.fee_paid || 0);
+      });
+
+      document.getElementById('stuPresentCount').innerText = presentCount;
+      document.getElementById('stuAbsentCount').innerText = absentCount;
+      document.getElementById('stuSelectedPaid').innerText = totalPaid;
+
+      if (filteredLogs.length === 0) {
+        logsBody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">No daily records found for this student yet.</td></tr>';
+        return;
+      }
+
+      filteredLogs.forEach(log => {
+        const badgeColor = log.attendance === 'Present' 
+          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' 
+          : (log.attendance === 'Absent' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300');
+        
+        const feeText = Number(log.fee_paid) > 0 
+          ? `<span class="font-bold text-emerald-600 dark:text-emerald-400">+ Rs. ${log.fee_paid}</span>` 
+          : `<span class="text-slate-400">-</span>`;
+
+        logsBody.innerHTML += `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+            <td class="p-3.5 text-slate-500 dark:text-slate-400">${log.log_date}</td>
+            <td class="p-3.5 font-semibold">${log.students ? log.students.name : 'Unknown'}</td>
+            <td class="p-3.5"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColor}">${log.attendance}</span></td>
+            <td class="p-3.5">${log.topic_taught || '-'}</td>
+            <td class="p-3.5">${feeText}</td>
+            <td class="p-3.5 text-right">
+              <button onclick="deleteLog(${log.id})" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-2.5 py-1 rounded-lg text-xs font-semibold transition">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    async function addStudent() {
+      const name = document.getElementById('stuName').value.trim();
+      const father_name = document.getElementById('stuFather').value.trim();
+      const class_grade = document.getElementById('stuClass').value.trim();
+      const monthly_fee = document.getElementById('stuFee').value || 0;
+      const phone = document.getElementById('stuPhone').value.trim();
+
+      if (!name) return alert('Please enter the student name!');
+
+      const btn = document.getElementById('btnStudent');
+      btn.innerText = 'Saving...';
+
+      const { error } = await db.from('students').insert([{ name, father_name, class_grade, monthly_fee, phone }]);
+      btn.innerText = 'Save Student';
+
+      if (error) return alert('Error: ' + error.message);
+
+      document.getElementById('stuName').value = '';
+      document.getElementById('stuFather').value = '';
+      document.getElementById('stuClass').value = '';
+      document.getElementById('stuFee').value = '';
+      document.getElementById('stuPhone').value = '';
+      loadAllData();
+    }
+
+    async function addDailyLog() {
+      const student_id = document.getElementById('logStudent').value;
+      const log_date = document.getElementById('logDate').value;
+      const attendance = document.getElementById('logAttendance').value;
+      const fee_paid = document.getElementById('logFee').value || 0;
+      const topic_taught = document.getElementById('logTopic').value.trim();
+
+      if (!student_id) return alert('Please select a student first!');
+
+      const btn = document.getElementById('btnLog');
+      btn.innerText = 'Saving...';
+
+      const { error } = await db.from('daily_logs').insert([{
+        student_id, log_date, attendance, fee_paid, topic_taught
+      }]);
+      btn.innerText = 'Save Daily Record';
+
+      if (error) return alert('Error: ' + error.message);
+
+      document.getElementById('logFee').value = '';
+      document.getElementById('logTopic').value = '';
+      document.getElementById('filterStudent').value = student_id;
+      loadAllData();
+    }
+
+    async function deleteStudent(id) {
+      if (!confirm('Are you sure you want to delete this student?')) return;
+      await db.from('students').delete().eq('id', id);
+      loadAllData();
+    }
+
+    async function deleteLog(id) {
+      if (!confirm('Are you sure you want to delete this record?')) return;
+      await db.from('daily_logs').delete().eq('id', id);
+      loadAllData();
+    }
+
+    // Run auth check on page load
+    checkUserSession();
+  </script>
+</body>
+</html>
