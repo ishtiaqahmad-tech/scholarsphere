@@ -33,27 +33,43 @@
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans pb-14">
 
-  <!-- LOGIN SECTION (Initially Visible if not logged in) -->
-  <div id="loginScreen" class="flex items-center justify-center min-h-screen px-4 bg-slate-100 dark:bg-slate-950">
-    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
-      <div class="text-center mb-6">
-        <span class="text-4xl bg-primary/10 p-3 rounded-2xl inline-block mb-2">🔐</span>
-        <h2 class="text-2xl font-bold">Tuition Portal Login</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your credentials to access management dashboard</p>
+  <!-- MODERN LUXURY LOGIN SECTION -->
+  <div id="loginScreen" class="relative flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 overflow-hidden">
+    <!-- Decorative background glows -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative bg-white/10 dark:bg-slate-900/80 backdrop-blur-2xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-slate-800 w-full max-w-md">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-gradient-to-tr from-primary to-indigo-400 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-primary/30 mx-auto mb-4">
+          🎓
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Tuition Portal</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-2 font-medium">Sign in to manage your center & students</p>
       </div>
-      <div class="space-y-4">
+
+      <div class="space-y-5">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Email Address</label>
-          <input id="loginEmail" type="email" placeholder="e.g., owner@tuition.com" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Email Address</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">📧</span>
+            <input id="loginEmail" type="email" placeholder="owner@tuition.com" class="w-full pl-11 pr-4 py-3 bg-slate-900/50 dark:bg-slate-800/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition">
+          </div>
         </div>
+
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Password</label>
-          <input id="loginPassword" type="password" placeholder="••••••••" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none transition">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">🔒</span>
+            <input id="loginPassword" type="password" placeholder="••••••••" class="w-full pl-11 pr-4 py-3 bg-slate-900/50 dark:bg-slate-800/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition">
+          </div>
         </div>
-        <button onclick="handleLogin()" id="btnLogin" class="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-3 rounded-xl shadow-md transition duration-200">
+
+        <button onclick="handleLogin()" id="btnLogin" class="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primaryHover hover:to-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 active:scale-[0.99] transition duration-200">
           Login to Dashboard
         </button>
-        <p id="loginError" class="text-rose-500 text-xs text-center font-medium mt-2"></p>
+
+        <p id="loginError" class="text-rose-400 text-xs text-center font-semibold mt-2 min-h-[16px]"></p>
       </div>
     </div>
   </div>
