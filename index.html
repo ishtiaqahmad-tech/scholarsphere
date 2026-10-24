@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScholarSphere - Tuition Management System</title>
+  <title>ScholarSphere</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -31,7 +31,13 @@
     body { transition: background-color 0.3s, color 0.3s; }
   </style>
   <script>
-    // Apply saved theme immediately on load so login screen matches it
+    function setTheme(primary, hover, light) {
+      document.documentElement.style.setProperty('--primary', primary);
+      document.documentElement.style.setProperty('--primary-hover', hover);
+      document.documentElement.style.setProperty('--primary-light', light);
+      localStorage.setItem('tuition_theme', JSON.stringify({ primary, hover, light }));
+    }
+
     const savedTheme = JSON.parse(localStorage.getItem('tuition_theme'));
     if (savedTheme) {
       document.documentElement.style.setProperty('--primary', savedTheme.primary);
@@ -52,6 +58,15 @@
     <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="relative bg-white/10 dark:bg-slate-900/80 backdrop-blur-2xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-slate-800 w-full max-w-md">
+      
+      <!-- Color Theme Switcher on Login Page -->
+      <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
+        <button onclick="setTheme('#4f46e5', '#4338ca', '#e0e7ff')" title="Indigo" class="w-3.5 h-3.5 rounded-full bg-indigo-500 border border-white hover:scale-125 transition"></button>
+        <button onclick="setTheme('#059669', '#047857', '#d1fae5')" title="Emerald" class="w-3.5 h-3.5 rounded-full bg-emerald-500 border border-white hover:scale-125 transition"></button>
+        <button onclick="setTheme('#2563eb', '#1d4ed8', '#dbeafe')" title="Blue" class="w-3.5 h-3.5 rounded-full bg-blue-500 border border-white hover:scale-125 transition"></button>
+        <button onclick="setTheme('#e11d48', '#be123c', '#ffe4e6')" title="Rose" class="w-3.5 h-3.5 rounded-full bg-rose-500 border border-white hover:scale-125 transition"></button>
+      </div>
+
       <div class="text-center mb-8">
         <div class="w-16 h-16 bg-gradient-to-tr from-primary to-indigo-500 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-primary/30 mx-auto mb-4">
           🎓
@@ -317,14 +332,7 @@
   </div>
 
   <script>
-    // Theme & Dark Mode
-    function setTheme(primary, hover, light) {
-      document.documentElement.style.setProperty('--primary', primary);
-      document.documentElement.style.setProperty('--primary-hover', hover);
-      document.documentElement.style.setProperty('--primary-light', light);
-      localStorage.setItem('tuition_theme', JSON.stringify({ primary, hover, light }));
-    }
-
+    // Toggle Dark Mode
     function toggleDarkMode() {
       const html = document.documentElement;
       html.classList.toggle('dark');
@@ -335,7 +343,8 @@
 
     if (localStorage.getItem('tuition_dark') === 'true') {
       document.documentElement.classList.add('dark');
-      document.getElementById('darkBtn').innerText = '☀️';
+      const darkBtn = document.getElementById('darkBtn');
+      if (darkBtn) darkBtn.innerText = '☀️';
     }
 
     // Supabase Connection
